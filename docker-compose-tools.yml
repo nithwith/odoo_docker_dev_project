@@ -1,0 +1,60 @@
+version: '3.1'
+services:
+  dev_postgresql:
+    image: postgres:15
+    container_name: dev_postgresql
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data/pgdata
+  dev_pgadmin:
+    image: dpage/pgadmin4
+    container_name: dev_pgadmin
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.fr
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+      - "traefik.http.routers.pgadmin.service=pgadmin"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+    depends_on:
+      - dev_postgresql
+  dev_mailcatcher:
+    container_name: dev_mailcatcher
+    image: dockage/mailcatcher:0.9.0
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailcatcher.rule=Host(`mailcatcher.localhost`)"
+      - "traefik.http.routers.mailcatcher.service=mailcatcher"
+      - "traefik.http.services.mailcatcher.loadbalancer.server.port=1080"
+  dev_traefik:
+    container_name: dev_traefik
+    image: "traefik:v2.10"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+volumes:
+  odoo-db-data:
+  pgadmin-data:
+
+

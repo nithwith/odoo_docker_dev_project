@@ -1,0 +1,21 @@
+version: '3.1'
+services:
+  odoo:
+    image: odoo:${ODOO_VERSION}
+    container_name: ${PROJECT_NAME}_odoo
+    command: odoo -c /etc/odoo/odoo.conf
+    ports:
+      - "8069:8069"
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons
+      - ./odoo_addons_community:/mnt/addons_community/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${PROJECT_NAME}.rule=Host(`${PROJECT_NAME}.localhost`)"
+      - "traefik.http.routers.${PROJECT_NAME}.entrypoints=web"
+volumes:
+  odoo-web-data:
+
+
